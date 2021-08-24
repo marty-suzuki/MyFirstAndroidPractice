@@ -1,0 +1,17 @@
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "MyFirstAndroidPractice"
+include ':app'
+include ':RemoteDataSourceInterface'
+include ':RemoteDataSource'
+include ':RepositoryInterface'
+include ':Repository'
+include ':ViewModelInterface'
+include ':ViewModel'
+include ':Router'
+include ':UIComponent'

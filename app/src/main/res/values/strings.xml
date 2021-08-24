@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">MovieSearchSample</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="fragment_movie_search_label">Movie Search</string>
+    <string name="fragment_movie_detail_label">Movie Detail</string>
+</resources>

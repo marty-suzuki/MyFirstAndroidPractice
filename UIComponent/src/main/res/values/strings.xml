@@ -1,0 +1,16 @@
+<resources>
+    <!-- Movie Detail -->
+    <string name="overview">Overview</string>
+
+    <!-- Movie Search -->
+    <string name="no_results">No Results</string>
+    <string name="no_image">No Image</string>
+    <string name="recommendations">Recommendations</string>
+    <string name="casts">Casts</string>
+
+    <!-- Unauthorized Dialog -->
+    <string name="unauthorized_message">You must define \'TMDB_API_KEY\' and \'TMDB_ACCESS_TOKEN\' to gradle.properties in Application module.\nYou can find details about \'API_KEY\' and \'ACCESS_TOKEN\' from \'https://developers.themoviedb.org/3/getting-started/introduction\'.</string>
+    <string name="introduction_url">https://developers.themoviedb.org/3/getting-started/introduction</string>
+    <string name="dialog_positive_show">Show</string>
+    <string name="dialog_negative_close">Close</string>
+</resources>

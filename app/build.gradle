@@ -1,0 +1,75 @@
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+}
+
+apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'kotlin-parcelize'
+
+android {
+    compileSdk 31
+
+    defaultConfig {
+        applicationId "com.martysuzuki.moviesearchsample"
+        minSdk 21
+        targetSdk 31
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "TMDB_API_KEY", "\"${project.properties['TMDB_API_KEY']}\""
+        buildConfigField "String", "TMDB_ACCESS_TOKEN", "\"${project.properties['TMDB_ACCESS_TOKEN']}\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+    }
+}
+
+dependencies {
+    implementation deps.core_ktx
+    implementation deps.material
+    implementation deps.appcompat
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
+    implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
+
+    implementation project(":UIComponent")
+    implementation project(":Router")
+    implementation project(":RemoteDataSource")
+    implementation project(":RemoteDataSourceInterface")
+    implementation project(":Repository")
+    implementation project(":RepositoryInterface")
+    implementation project(":ViewModel")
+    implementation project(":ViewModelInterface")
+
+    implementation deps.viewmodel
+    implementation deps.livedata
+
+    implementation deps.hilt_android
+    kapt deps.hilt_android_compiler
+
+    implementation deps.hilt_viewmodel
+    kapt deps.hilt_compiler
+
+    implementation deps.glide
+
+    testImplementation deps.junit
+    androidTestImplementation deps.ext_junit
+    androidTestImplementation deps.espresso_core
+}
