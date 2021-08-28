@@ -39,6 +39,7 @@ dependencies {
     implementation deps.material
 
     testImplementation deps.junit
+    testImplementation deps.coroutines_test
     androidTestImplementation deps.ext_junit
     androidTestImplementation deps.espresso_core
 
