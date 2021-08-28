@@ -39,6 +39,8 @@ dependencies {
     implementation deps.core_ktx
 
     testImplementation deps.junit
+    testImplementation deps.coroutines_test
+
     androidTestImplementation deps.ext_junit
     androidTestImplementation deps.espresso_core
 

@@ -70,7 +70,7 @@ class MovieRepositoryImpl @Inject constructor(
                         ?.let { images ->
                             images.backdrops.map { it.file_path }
                         }
-                        ?.let { it + listOf(backdropPath) }
+                        ?.let { listOf(backdropPath) + it }
                         ?.map(this::getFullpath)
                 } ?: emptyList(),
                 casts = response.credits?.let { credit ->
