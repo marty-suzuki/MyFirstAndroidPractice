@@ -36,10 +36,14 @@ android {
 
 dependencies {
 
-    implementation project(":Router")
-    implementation project(':UiLogicInterface')
-
     implementation deps.core_ktx
+    implementation deps.material
+
+    implementation project(":Router")
+
+    testImplementation deps.junit
+    androidTestImplementation deps.ext_junit
+    androidTestImplementation deps.espresso_core
 
     implementation deps.hilt_android
     kapt deps.hilt_android_compiler
@@ -49,8 +53,4 @@ dependencies {
 
     implementation deps.viewmodel
     implementation deps.livedata
-
-    testImplementation deps.junit
-    androidTestImplementation deps.ext_junit
-    androidTestImplementation deps.espresso_core
 }

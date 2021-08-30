@@ -35,22 +35,19 @@ android {
 }
 
 dependencies {
+    implementation deps.core_ktx
+    implementation deps.material
 
-    implementation project(":Router")
+    testImplementation deps.junit
+    testImplementation deps.coroutines_test
+    androidTestImplementation deps.ext_junit
+    androidTestImplementation deps.espresso_core
+
+    implementation project(":RepositoryInterface")
     implementation project(':UiLogicInterface')
 
-    implementation deps.core_ktx
+    implementation deps.livedata
 
     implementation deps.hilt_android
     kapt deps.hilt_android_compiler
-
-    implementation deps.hilt_viewmodel
-    kapt deps.hilt_compiler
-
-    implementation deps.viewmodel
-    implementation deps.livedata
-
-    testImplementation deps.junit
-    androidTestImplementation deps.ext_junit
-    androidTestImplementation deps.espresso_core
 }

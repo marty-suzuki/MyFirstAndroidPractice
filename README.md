@@ -22,15 +22,19 @@ root/
   ┃  ┣ MainActivity.kt
   ┃  ┣ nav_graph.xml
   ┃  ┗ HiltInjectionModules
-  ┣ Router
-  ┃  ┣ MovieDetailRouter.kt (interface)
-  ┃  ┗ MovieSearchRouter.kt (interface)
-  ┣ UIComponent
+  ┣ UiComponent
   ┃  ┣ MovieDetailFragment.kt
   ┃  ┣ fragment_movie_detail.xml
   ┃  ┣ MovieSearchFragment.kt
   ┃  ┗ fragment_movie_search.xml
   ┣ ViewModel
+  ┃  ┣ AnyViewModel.kt
+  ┃  ┣ MovieDetailViewModel.kt
+  ┃  ┗ MovieSearchViewModel.kt
+  ┣ Router
+  ┃  ┣ MovieDetailRouter.kt (interface)
+  ┃  ┗ MovieSearchRouter.kt (interface)
+  ┣ UiLogic
   ┃  ┣ main
   ┃  ┃  ┣ MovieDetailUiLogicImpl.kt
   ┃  ┃  ┣ MovieDetailUiLogicFactoryImpl.kt
@@ -39,13 +43,10 @@ root/
   ┃  ┗ test
   ┃     ┣ MovieDetailUiLogicImplTest.kt
   ┃     ┗ MovieSearchUiLogicImplTest.kt
-  ┣ ViewModelInterface
-  ┃  ┣ AnyViewModel.kt
+  ┣ UiLogicInterface
   ┃  ┣ UiLogic.kt (interface)
   ┃  ┣ UiLogicFactory.kt (interface)
-  ┃  ┣ MovieDetailViewModel.kt
   ┃  ┣ MovieDetailUiLogic.kt (interface)
-  ┃  ┣ MovieSearchViewModel.kt
   ┃  ┗ MovieSearchUiLogic.kt (interface)
   ┣ Repository
   ┃  ┣ main
@@ -62,7 +63,7 @@ root/
 
 ### Module Dependency Graph
 
-![module_dependency](https://user-images.githubusercontent.com/2082134/131148609-929a4704-9198-420f-988e-483f04c1221e.png)
+![module_graph](https://user-images.githubusercontent.com/2082134/131373445-d57c16ed-83c8-408c-b16c-5098f8f58f7d.png)
 
 ### View Composition and UI Layer Data Structure
 

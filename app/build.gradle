@@ -49,14 +49,15 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
     implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
 
-    implementation project(":UIComponent")
+    implementation project(':UiComponent')
     implementation project(":Router")
     implementation project(":RemoteDataSource")
     implementation project(":RemoteDataSourceInterface")
     implementation project(":Repository")
     implementation project(":RepositoryInterface")
-    implementation project(":ViewModel")
-    implementation project(":ViewModelInterface")
+    implementation project(':UiLogic')
+    implementation project(':UiLogicInterface')
+    implementation project(':ViewModel')
 
     implementation deps.viewmodel
     implementation deps.livedata

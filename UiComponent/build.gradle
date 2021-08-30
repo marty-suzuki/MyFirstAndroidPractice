@@ -32,14 +32,23 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
 
-    implementation project(":Router")
+    implementation project(':ViewModel')
+    implementation project(':Router')
     implementation project(':UiLogicInterface')
 
     implementation deps.core_ktx
+    implementation deps.material
+    implementation deps.appcompat
+    implementation deps.glide
+
+    implementation "androidx.fragment:fragment-ktx:1.3.6"
 
     implementation deps.hilt_android
     kapt deps.hilt_android_compiler
@@ -47,10 +56,9 @@ dependencies {
     implementation deps.hilt_viewmodel
     kapt deps.hilt_compiler
 
-    implementation deps.viewmodel
-    implementation deps.livedata
-
     testImplementation deps.junit
     androidTestImplementation deps.ext_junit
     androidTestImplementation deps.espresso_core
+
+
 }
