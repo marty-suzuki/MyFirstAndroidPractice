@@ -4,18 +4,28 @@ import com.martysuzuki.repositoryinterface.movie.MovieRepository
 import com.martysuzuki.repositoryinterface.movie.MoviesResult
 import com.martysuzuki.repositoryinterface.movie.Page
 import com.martysuzuki.uilogic.DiffCalculator
+import com.martysuzuki.uilogicinterface.UiLogicFactory
 import com.martysuzuki.uilogicinterface.search.MovieSearchItem
 import com.martysuzuki.uilogicinterface.search.MovieSearchUiLogic
 import com.martysuzuki.uilogicinterface.search.MovieSearchUiState
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 @ExperimentalCoroutinesApi
-class MovieSearchUiLogicImpl constructor(
+class MovieSearchUiLogicImpl @AssistedInject constructor(
     private val movieRepository: MovieRepository,
     private val defaultDispatcher: CoroutineDispatcher,
-    viewModelScope: CoroutineScope
+    @Assisted viewModelScope: CoroutineScope,
+    @Assisted dependency: Unit
 ) : MovieSearchUiLogic {
+
+    @AssistedFactory
+    interface Factory : UiLogicFactory<MovieSearchUiLogic, Unit> {
+        override fun create(viewModelScope: CoroutineScope, dependency: Unit): MovieSearchUiLogicImpl
+    }
 
     private sealed class SearchAction {
 

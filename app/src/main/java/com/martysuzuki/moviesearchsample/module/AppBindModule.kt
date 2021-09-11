@@ -11,7 +11,7 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface AppBindModule {
     @Binds
-    abstract fun bindMovieRepository(
+    fun bindMovieRepository(
         movieRepository: MovieRepositoryImpl
     ): MovieRepository
 }

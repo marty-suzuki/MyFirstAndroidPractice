@@ -10,11 +10,11 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
 @ExperimentalCoroutinesApi
-class MovieDetailUiLogicImpl constructor(
+class MovieDetailUiLogicImpl(
     private val movieRepository: MovieRepository,
     private val defaultDispatcher: CoroutineDispatcher,
     viewModelScope: CoroutineScope,
-    private val movieId: Int
+    movieId: Int
 ) : MovieDetailUiLogic {
 
     override val update: Flow<MovieDetailUiState>
