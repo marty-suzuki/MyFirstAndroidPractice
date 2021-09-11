@@ -48,6 +48,7 @@ dependencies {
     implementation project(":RemoteDataSourceInterface")
 
     implementation deps.retrofit
+    implementation deps.coroutine_core
 
     implementation deps.hilt_android
     kapt deps.hilt_android_compiler

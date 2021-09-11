@@ -2,6 +2,7 @@ package com.martysuzuki.repository.movie
 
 import com.martysuzuki.remotedatasourceinterface.TheMovieDatabaseService
 import com.martysuzuki.repositoryinterface.movie.*
+import kotlinx.coroutines.withTimeout
 import java.lang.Exception
 import javax.inject.Inject
 
@@ -19,7 +20,9 @@ class MovieRepositoryImpl @Inject constructor(
             }
             else -> {
                 return try {
-                    val response = theMovieDatabaseService.movies(query, page)
+                    val response = withTimeout(TIMEOUT_MILLIS) {
+                        theMovieDatabaseService.movies(query, page)
+                    }
 
                     val movies = response.results.map(this::translateMovie)
                     val nextPage = when (response.page) {
@@ -57,7 +60,9 @@ class MovieRepositoryImpl @Inject constructor(
 
     override suspend fun fetchMovieDetail(id: Int): MovieDetailResult {
         return try {
-            val response = theMovieDatabaseService.movieDetail(id)
+            val response = withTimeout(TIMEOUT_MILLIS) {
+                theMovieDatabaseService.movieDetail(id)
+            }
 
             val movie = MovieDetail(
                 id = response.id,
@@ -91,4 +96,8 @@ class MovieRepositoryImpl @Inject constructor(
         posterPath = movie.poster_path?.let(this::getFullpath),
         title = movie.title
     )
+
+    companion object {
+        const val TIMEOUT_MILLIS = 10_000L
+    }
 }
