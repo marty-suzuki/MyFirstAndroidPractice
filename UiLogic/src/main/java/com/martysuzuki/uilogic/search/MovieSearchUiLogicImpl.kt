@@ -10,11 +10,19 @@ import com.martysuzuki.uilogicinterface.search.MovieSearchUiState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
+@ExperimentalCoroutinesApi
 class MovieSearchUiLogicImpl constructor(
     private val movieRepository: MovieRepository,
     private val defaultDispatcher: CoroutineDispatcher,
-    private val viewModelScope: CoroutineScope
+    viewModelScope: CoroutineScope
 ) : MovieSearchUiLogic {
+
+    private sealed class SearchAction {
+
+        data class Execute(val query: String, val page:  Int?) : SearchAction()
+
+        object Stop : SearchAction()
+    }
 
     override val update: Flow<MovieSearchUiState>
         get() = _items
@@ -52,20 +60,82 @@ class MovieSearchUiLogicImpl constructor(
         get() = _showUnauthorizedDialog
     private val _showUnauthorizedDialog = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
-    private var searchJob: Job? = null
+    private val searchAction = MutableSharedFlow<SearchAction>(extraBufferCapacity = 1)
+    private var isSearching = false
     private var _page: Page? = null
     private var _query: String? = null
 
+    init {
+        searchAction
+            .flatMapLatest {
+                when (it) {
+                    is SearchAction.Execute -> {
+                        isSearching = true
+                        flowOf(movieRepository.fetchMovies(it.query, it.page ?: 1))
+                    }
+                    SearchAction.Stop ->
+                        emptyFlow()
+                }
+            }
+            .onEach { result ->
+                when (result) {
+                    is MoviesResult.Success -> {
+
+                        val newItems = result.items.map {
+                            MovieSearchItem.Movie(
+                                id = it.id,
+                                title = it.title,
+                                postPath = it.posterPath
+                            )
+                        }
+
+                        if (_page == null && newItems.isEmpty()) {
+                            _items.value = listOf(MovieSearchItem.NoResults)
+                        } else {
+                            _items.value = (_items.value + newItems)
+                                .filter { it !is MovieSearchItem.Loading }
+                                .let {
+                                    when (result.page) {
+                                        is Page.Next ->
+                                            it + listOf(MovieSearchItem.Loading(MovieSearchItem.Loading.Style.WRAP_CONTENT))
+                                        is Page.Finish ->
+                                            it
+                                    }
+                                }
+                        }
+                        _page = result.page
+                    }
+                    is MoviesResult.Failure -> {
+                        _items.value = _items.value.filter { it !is MovieSearchItem.Loading }
+
+                        when (result.reason) {
+                            is MoviesResult.Failure.Reason.Unauthorized -> {
+                                _showUnauthorizedDialog.emit(Unit)
+                            }
+                            is MoviesResult.Failure.Reason.EmptyQuery,
+                            is MoviesResult.Failure.Reason.InvalidPage,
+                            is MoviesResult.Failure.Reason.NotFound,
+                            is MoviesResult.Failure.Reason.Unknown -> {
+                                // These are low priority unhandled errors at this time.
+                            }
+                        }
+                    }
+                }
+                isSearching = false
+            }
+            .launchIn(viewModelScope)
+    }
+
     override fun search(text: String) {
-        searchJob?.cancel()
+        isSearching = false
         _page = null
         _query = text
         _items.value = listOf(MovieSearchItem.Loading(MovieSearchItem.Loading.Style.MATCH_PARENT))
-        fetchItems(text, null)
+        searchAction.tryEmit(SearchAction.Execute(text, null))
     }
 
     override fun reachBottom() {
-        if (searchJob?.isActive == true) {
+        if (isSearching) {
             return
         }
         val query = _query ?: return
@@ -75,59 +145,11 @@ class MovieSearchUiLogicImpl constructor(
                 is Page.Finish -> return
             }
         }
-        fetchItems(query, page)
+        searchAction.tryEmit(SearchAction.Execute(query, page))
     }
 
     override fun onCleared() {
-        searchJob?.cancel()
-    }
-
-    private fun fetchItems(query: String, page: Int?) {
-        searchJob = viewModelScope.launch {
-            when (val result = movieRepository.fetchMovies(query, page ?: 1)) {
-                is MoviesResult.Success -> {
-
-                    val newItems = result.items.map {
-                        MovieSearchItem.Movie(
-                            id = it.id,
-                            title = it.title,
-                            postPath = it.posterPath
-                        )
-                    }
-
-                    if (_page == null && newItems.isEmpty()) {
-                        _items.value = listOf(MovieSearchItem.NoResults)
-                    } else {
-                        _items.value = (_items.value + newItems)
-                            .filter { it !is MovieSearchItem.Loading }
-                            .let {
-                                when (result.page) {
-                                    is Page.Next ->
-                                        it + listOf(MovieSearchItem.Loading(MovieSearchItem.Loading.Style.WRAP_CONTENT))
-                                    is Page.Finish ->
-                                        it
-                                }
-                            }
-                    }
-                    _page = result.page
-                }
-                is MoviesResult.Failure -> {
-                    _items.value = _items.value.filter { it !is MovieSearchItem.Loading }
-
-                    when (result.reason) {
-                        is MoviesResult.Failure.Reason.Unauthorized -> {
-                            _showUnauthorizedDialog.emit(Unit)
-                        }
-                        is MoviesResult.Failure.Reason.EmptyQuery,
-                        is MoviesResult.Failure.Reason.InvalidPage,
-                        is MoviesResult.Failure.Reason.NotFound,
-                        is MoviesResult.Failure.Reason.Unknown -> {
-                            // These are low priority unhandled errors at this time.
-                        }
-                    }
-                }
-            }
-        }
+        searchAction.tryEmit(SearchAction.Stop)
     }
 
     override fun onItemClicked(position: Int) {

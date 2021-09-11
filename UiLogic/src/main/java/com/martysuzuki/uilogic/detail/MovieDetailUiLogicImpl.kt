@@ -9,10 +9,11 @@ import com.martysuzuki.uilogicinterface.detail.MovieDetailUiState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 
-class MovieDetailUiLogicImpl(
+@ExperimentalCoroutinesApi
+class MovieDetailUiLogicImpl constructor(
     private val movieRepository: MovieRepository,
     private val defaultDispatcher: CoroutineDispatcher,
-    private val viewModelScope: CoroutineScope,
+    viewModelScope: CoroutineScope,
     private val movieId: Int
 ) : MovieDetailUiLogic {
 
@@ -45,7 +46,7 @@ class MovieDetailUiLogicImpl(
     private val _navigateToMovieDetail = MutableSharedFlow<Int>(extraBufferCapacity = 1)
 
     private val _thumbnailStatus = MutableSharedFlow<ThumbnailStatus>(replay = 1)
-    private var timerJob: Job? = null
+    private val _shouldStartThumbnailTimer = MutableSharedFlow<Boolean>(extraBufferCapacity = 1)
 
     private data class ThumbnailStatus(val index: Int, val images: List<String>)
 
@@ -149,45 +150,50 @@ class MovieDetailUiLogicImpl(
                 }
             }
         }
+
+        _shouldStartThumbnailTimer
+            .flatMapLatest { shouldStart ->
+                if (shouldStart) {
+                    _thumbnailStatus.onEach { delay(5000L) }
+                } else {
+                    emptyFlow()
+                }
+            }
+            .onEach { status ->
+                val images = status.images
+                if (images.size < 2) {
+                    return@onEach
+                }
+                val nextIndex = if (images.size > status.index + 1) {
+                    status.index + 1
+                } else {
+                    0
+                }
+
+                val image = MovieDetailItem.Thumbnail.Item.Image(images[nextIndex])
+                val filteredItems = _items.value.filter { it !is MovieDetailItem.Thumbnail }
+                _items.value = listOf(MovieDetailItem.Thumbnail(image)) + filteredItems
+                _thumbnailStatus.tryEmit(
+                    ThumbnailStatus(
+                        index = nextIndex,
+                        images = images
+                    )
+                )
+
+            }
+            .launchIn(viewModelScope)
     }
 
     override fun onCleared() {
-        timerJob?.cancel()
-        timerJob = null
+        _shouldStartThumbnailTimer.tryEmit(false)
     }
 
     override fun onDestroyView() {
-        timerJob?.cancel()
-        timerJob = null
+        _shouldStartThumbnailTimer.tryEmit(false)
     }
 
     override fun onViewCreated() {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            _thumbnailStatus
-                .onEach { delay(5000L) }
-                .collect { status ->
-                    val images = status.images
-                    if (images.size < 2) {
-                        return@collect
-                    }
-                    val nextIndex = if (images.size > status.index + 1) {
-                        status.index + 1
-                    } else {
-                        0
-                    }
-
-                    val image = MovieDetailItem.Thumbnail.Item.Image(images[nextIndex])
-                    val filteredItems = _items.value.filter { it !is MovieDetailItem.Thumbnail }
-                    _items.value = listOf(MovieDetailItem.Thumbnail(image)) + filteredItems
-                    _thumbnailStatus.tryEmit(
-                        ThumbnailStatus(
-                            index = nextIndex,
-                            images = images
-                        )
-                    )
-                }
-        }
+        _shouldStartThumbnailTimer.tryEmit(true)
     }
 
     private fun updateOverview(overview: ExpandableOverview?) {
