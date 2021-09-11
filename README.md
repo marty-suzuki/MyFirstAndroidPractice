@@ -37,9 +37,7 @@ root/
   ┣ UiLogic
   ┃  ┣ main
   ┃  ┃  ┣ MovieDetailUiLogicImpl.kt
-  ┃  ┃  ┣ MovieDetailUiLogicFactoryImpl.kt
-  ┃  ┃  ┣ MovieSearchUiLogicImpl.kt
-  ┃  ┃  ┗ MovieSearchUiLogicFactoryImpl.kt
+  ┃  ┃  ┗ MovieSearchUiLogicImpl.kt
   ┃  ┗ test
   ┃     ┣ MovieDetailUiLogicImplTest.kt
   ┃     ┗ MovieSearchUiLogicImplTest.kt
