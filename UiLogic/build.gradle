@@ -48,6 +48,8 @@ dependencies {
 
     implementation deps.livedata
 
+    implementation deps.unio
+
     implementation deps.hilt_android
     kapt deps.hilt_android_compiler
 }

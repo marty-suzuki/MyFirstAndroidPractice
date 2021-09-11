@@ -69,6 +69,7 @@ dependencies {
     kapt deps.hilt_compiler
 
     implementation deps.glide
+    implementation deps.unio
 
     testImplementation deps.junit
     androidTestImplementation deps.ext_junit

@@ -50,6 +50,8 @@ dependencies {
     implementation deps.viewmodel
     implementation deps.livedata
 
+    implementation deps.unio
+
     testImplementation deps.junit
     androidTestImplementation deps.ext_junit
     androidTestImplementation deps.espresso_core

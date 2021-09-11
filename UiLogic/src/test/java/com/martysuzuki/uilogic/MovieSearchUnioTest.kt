@@ -1,9 +1,11 @@
 package com.martysuzuki.uilogic
 
 import com.martysuzuki.repositoryinterface.movie.*
-import com.martysuzuki.uilogic.search.MovieSearchUiLogicImpl
+import com.martysuzuki.uilogic.search.MovieSearchUnio
 import com.martysuzuki.uilogic.util.MovieRepositoryMock
+import com.martysuzuki.uilogicinterface.search.MovieSearchInput
 import com.martysuzuki.uilogicinterface.search.MovieSearchItem
+import com.martysuzuki.uilogicinterface.search.MovieSearchOutput
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,19 +16,27 @@ import org.junit.Assert.*
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class MovieSearchUiLogicImplTest {
+class MovieSearchUnioTest {
 
     private class Dependency {
         val movieRepository = MovieRepositoryMock()
         val coroutineScope = TestCoroutineScope()
         val coroutineDispatcher = TestCoroutineDispatcher()
 
-        val testTarget = MovieSearchUiLogicImpl(
-            movieRepository,
-            coroutineDispatcher,
-            coroutineScope,
-            Unit
+        val state = MovieSearchUnio.State()
+        val onCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        private val testTarget = MovieSearchUnio(
+            input = MovieSearchInput(),
+            state = state,
+            defaultDispatcher = coroutineDispatcher,
+            movieRepository = movieRepository,
+            viewModelScope = coroutineScope,
+            onCleared = onCleared,
         )
+
+        val input = testTarget.input
+        val output = testTarget.output
     }
 
     @Test
@@ -40,12 +50,12 @@ class MovieSearchUiLogicImplTest {
         val wrapContentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.WRAP_CONTENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job1 = dependency.testTarget.update
+        val job1 = dependency.output.getFlow(MovieSearchOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
         var actualNavigateToMovieDetail: Int? = null
-        val job2 = dependency.testTarget.navigateToMovieDetail
+        val job2 = dependency.output.getFlow(MovieSearchOutput::navigateToMovieDetail)
             .onEach { actualNavigateToMovieDetail = it }
             .launchIn(this)
 
@@ -56,7 +66,7 @@ class MovieSearchUiLogicImplTest {
         }
 
         // 1st TEST immediately after when search method called
-        dependency.testTarget.search(query)
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
         assertEquals(listOf(matchParentLoadingItem), actualItems)
         assertEquals(Pair(query, 1), dependency.movieRepository.fetchMoviesSpy.params)
         clear()
@@ -68,7 +78,7 @@ class MovieSearchUiLogicImplTest {
         clear()
 
         // 3rd TEST when fetch more pages
-        dependency.testTarget.reachBottom()
+        dependency.input.getLambda(MovieSearchInput::reachBottom).invoke()
         dependency.movieRepository.fetchMoviesSpy.result = MoviesResult.Success(listOf(movie), Page.Finish)
         dependency.movieRepository.fetchMoviesSpy.advanceTimeBy(100)
         assertEquals(Pair(query, 2), dependency.movieRepository.fetchMoviesSpy.params)
@@ -76,14 +86,14 @@ class MovieSearchUiLogicImplTest {
         clear()
 
         // 4th If page is Pages.Finish, no more fetch API called
-        dependency.testTarget.reachBottom()
+        dependency.input.getLambda(MovieSearchInput::reachBottom).invoke()
         dependency.movieRepository.fetchMoviesSpy.advanceTimeBy(100)
         assertNull(dependency.movieRepository.fetchMoviesSpy.params)
         assertNull(actualItems)
         clear()
 
         // 5th TEST when onItemClicked called, navigateToMovieDetail emits movieId
-        dependency.testTarget.onItemClicked(0)
+        dependency.input.getLambda(MovieSearchInput::onItemClicked).invoke(0)
         assertEquals(movieItem.id, actualNavigateToMovieDetail)
         clear()
 
@@ -99,12 +109,12 @@ class MovieSearchUiLogicImplTest {
         val matchParentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.MATCH_PARENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job = dependency.testTarget.update
+        val job = dependency.output.getFlow(MovieSearchOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
         // 1st TEST immediately after when search method called
-        dependency.testTarget.search(query)
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
         assertEquals(listOf(matchParentLoadingItem), actualItems)
 
         // 2nd TEST when API response received
@@ -124,22 +134,22 @@ class MovieSearchUiLogicImplTest {
         val movie = Movie(id = 1, posterPath = "test-post", title = "test-title")
 
         // 1st TEST immediately after when search method called
-        dependency.testTarget.search(query)
-        dependency.testTarget.reachBottom()
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
+        dependency.input.getLambda(MovieSearchInput::reachBottom).invoke()
         dependency.movieRepository.fetchMoviesSpy.result = MoviesResult.Success(emptyList(), Page.Finish)
         dependency.movieRepository.fetchMoviesSpy.advanceTimeBy(100)
         assertEquals(Pair(query, 1), dependency.movieRepository.fetchMoviesSpy.params)
         assertEquals(1, dependency.movieRepository.fetchMoviesSpy.calledCount)
 
-        dependency.testTarget.search(query)
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
         dependency.movieRepository.fetchMoviesSpy.result = MoviesResult.Success(listOf(movie), Page.Next(2))
         dependency.movieRepository.fetchMoviesSpy.advanceTimeBy(100)
         assertEquals(Pair(query, 1), dependency.movieRepository.fetchMoviesSpy.params)
         assertEquals(2, dependency.movieRepository.fetchMoviesSpy.calledCount)
 
         // 2nd TEST immediately after when load more called
-        dependency.testTarget.reachBottom()
-        dependency.testTarget.reachBottom()
+        dependency.input.getLambda(MovieSearchInput::reachBottom).invoke()
+        dependency.input.getLambda(MovieSearchInput::reachBottom).invoke()
         dependency.movieRepository.fetchMoviesSpy.result = MoviesResult.Success(listOf(movie), Page.Finish)
         dependency.movieRepository.fetchMoviesSpy.advanceTimeBy(100)
         assertEquals(Pair(query, 2), dependency.movieRepository.fetchMoviesSpy.params)
@@ -154,19 +164,19 @@ class MovieSearchUiLogicImplTest {
         val matchParentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.MATCH_PARENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job1 = dependency.testTarget.update
+        val job1 = dependency.output.getFlow(MovieSearchOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
         var actualShowUnauthorizedDialog: Unit? = null
-        val job2 = dependency.testTarget.showUnauthorizedDialog
+        val job2 = dependency.output.getFlow(MovieSearchOutput::showUnauthorizedDialog)
             .onEach { actualShowUnauthorizedDialog = it }
             .launchIn(this)
 
-        dependency.testTarget.search(query)
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
 
         // 1st TEST immediately after when search method called
-        dependency.testTarget.search(query)
+        dependency.input.getLambda(MovieSearchInput::search).invoke(query)
         assertEquals(listOf(matchParentLoadingItem), actualItems)
 
         // 2nd TEST when Unauthorized response received

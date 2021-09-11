@@ -3,14 +3,15 @@ package com.martysuzuki.uilogic
 import com.martysuzuki.repositoryinterface.movie.Movie
 import com.martysuzuki.repositoryinterface.movie.MovieDetail
 import com.martysuzuki.repositoryinterface.movie.MovieDetailResult
-import com.martysuzuki.uilogic.detail.MovieDetailUiLogicImpl
+import com.martysuzuki.uilogic.detail.MovieDetailUnio
 import com.martysuzuki.uilogic.util.MovieRepositoryMock
+import com.martysuzuki.uilogicinterface.detail.MovieDetailInput
 import com.martysuzuki.uilogicinterface.detail.MovieDetailItem
+import com.martysuzuki.uilogicinterface.detail.MovieDetailOutput
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.TestCoroutineScope
 import kotlinx.coroutines.test.runBlockingTest
@@ -19,19 +20,29 @@ import org.junit.Assert.fail
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
-class MovieDetailUiLogicImplTest {
+class MovieDetailUnioTest {
 
     private class Dependency(movieId: Int = 100) {
         val movieRepository = MovieRepositoryMock()
         val coroutineDispatcher = TestCoroutineDispatcher()
         val coroutineScope = TestCoroutineScope()
 
-        val testTarget = MovieDetailUiLogicImpl(
-            movieRepository = movieRepository,
-            defaultDispatcher = coroutineDispatcher,
+        val state = MovieDetailUnio.State()
+        val onCleared = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+
+        private val testTarget = MovieDetailUnio(
+            input = MovieDetailInput(),
+            state = state,
+            extra = MovieDetailUnio.Extra(
+                movieRepository = movieRepository,
+                defaultDispatcher = coroutineDispatcher,
+                onCleared = onCleared,
+                movieId = movieId,
+            ),
             viewModelScope = coroutineScope,
-            movieId = movieId
         )
+        val input = testTarget.input
+        val output = testTarget.output
     }
 
     @Test
@@ -62,12 +73,12 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job1 = dependency.testTarget.update
+        val job1 = dependency.output.getFlow(MovieDetailOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
         var actualNavigateToMovieDetail: Int? = null
-        val job2 = dependency.testTarget.navigateToMovieDetail
+        val job2 = dependency.output.getFlow(MovieDetailOutput::navigateToMovieDetail)
             .onEach { actualNavigateToMovieDetail = it }
             .launchIn(this)
 
@@ -97,7 +108,7 @@ class MovieDetailUiLogicImplTest {
         if (recommendationIndex == null) {
             fail("index must not be null")
         } else {
-            dependency.testTarget.onItemClicked(recommendationIndex)
+            dependency.input.getLambda(MovieDetailInput::onItemClicked).invoke(recommendationIndex)
             assertEquals(expectedRecommendationId, actualNavigateToMovieDetail)
         }
 
@@ -106,7 +117,7 @@ class MovieDetailUiLogicImplTest {
         if (overviewIndex == null) {
             fail("index must not be null")
         } else {
-            dependency.testTarget.onItemClicked(overviewIndex)
+            dependency.input.getLambda(MovieDetailInput::onItemClicked).invoke(overviewIndex)
             assertEquals(
                 listOf(
                     MovieDetailItem.Thumbnail(MovieDetailItem.Thumbnail.Item.Image(expectedBackdrop)),
@@ -143,7 +154,7 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = dependency.testTarget.update
+        val job = dependency.output.getFlow(MovieDetailOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
@@ -179,7 +190,7 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = dependency.testTarget.update
+        val job =  dependency.output.getFlow(MovieDetailOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
@@ -201,7 +212,7 @@ class MovieDetailUiLogicImplTest {
             fail("index must not be null")
         } else {
             // 2nd TEST when click overview index, text is full and visible is false
-            dependency.testTarget.onItemClicked(index)
+            dependency.input.getLambda(MovieDetailInput::onItemClicked).invoke(index)
             assertEquals(
                 listOf(
                     MovieDetailItem.Thumbnail(MovieDetailItem.Thumbnail.Item.Empty),
@@ -213,7 +224,7 @@ class MovieDetailUiLogicImplTest {
             )
 
             // 3rd TEST when click overview index, text is truncated and visible is true
-            dependency.testTarget.onItemClicked(index)
+            dependency.input.getLambda(MovieDetailInput::onItemClicked).invoke(index)
             assertEquals(
                 listOf(
                     MovieDetailItem.Thumbnail(MovieDetailItem.Thumbnail.Item.Empty),
@@ -247,7 +258,7 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = dependency.testTarget.update
+        val job = dependency.output.getFlow(MovieDetailOutput::update)
             .onEach { actualItems = it.items }
             .launchIn(this)
 
@@ -263,7 +274,7 @@ class MovieDetailUiLogicImplTest {
         )
 
         // 2nd TEST immediately after when onViewCreated method called
-        dependency.testTarget.onViewCreated()
+        dependency.input.getLambda(MovieDetailInput::onViewCreated).invoke()
         dependency.coroutineScope.advanceTimeBy(5000L)
         assertEquals(
             listOf(
@@ -284,7 +295,7 @@ class MovieDetailUiLogicImplTest {
         )
 
         // 4th TEST after onDestroyView called, backdrop doesn't be changed
-        dependency.testTarget.onDestroyView()
+        dependency.input.getLambda(MovieDetailInput::onDestroyView).invoke()
         dependency.coroutineScope.advanceTimeBy(5000L)
         assertEquals(
             listOf(

@@ -10,10 +10,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.marty_suzuki.unio.InputProxy
+import com.github.marty_suzuki.unio.OutputProxy
 import com.martysuzuki.args.detail.MovieDetailArgs
 import com.martysuzuki.router.detail.MovieDetailRouter
 import com.martysuzuki.uicomponent.databinding.FragmentMovieDetailBinding
-import com.martysuzuki.uilogicinterface.detail.MovieDetailUiLogic
+import com.martysuzuki.uilogicinterface.detail.MovieDetailInput
+import com.martysuzuki.uilogicinterface.detail.MovieDetailOutput
 import com.martysuzuki.viewmodel.detail.MovieDetailViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
@@ -27,7 +30,8 @@ class MovieDetailFragment : Fragment() {
     private var binding: FragmentMovieDetailBinding? = null
 
     private val viewModel: MovieDetailViewModel by viewModels()
-    private val uiLogic: MovieDetailUiLogic by lazy { viewModel.uiLogic }
+    private val input: InputProxy<MovieDetailInput> by lazy { viewModel.input }
+    private val output: OutputProxy<MovieDetailOutput> by lazy { viewModel.output }
     private val router: MovieDetailRouter by lazy { viewModel.router }
 
     override fun onCreateView(
@@ -47,18 +51,18 @@ class MovieDetailFragment : Fragment() {
                 val searchItemViewAdapter = MovieDetailItemViewAdapter().apply {
                     setOnItemClickListener(object : MovieDetailItemViewAdapter.OnItemClickListener {
                         override fun onItemClicked(position: Int) {
-                            uiLogic.onItemClicked(position)
+                            input.getLambda(MovieDetailInput::onItemClicked).invoke(position)
                         }
                     })
                 }
 
-                uiLogic.update
+                output.getFlow(MovieDetailOutput::update)
                     .onEach {
                         searchItemViewAdapter.apply(it)
                     }
                     .launchIn(viewLifecycleOwner.lifecycleScope)
 
-                uiLogic.navigateToMovieDetail
+                output.getFlow(MovieDetailOutput::navigateToMovieDetail)
                     .onEach {
                         router.routeMovieDetail(
                             fragment = this@MovieDetailFragment,
@@ -123,12 +127,12 @@ class MovieDetailFragment : Fragment() {
             }
         }
 
-        uiLogic.onViewCreated()
+        input.getLambda(MovieDetailInput::onViewCreated).invoke()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        uiLogic.onDestroyView()
+        input.getLambda(MovieDetailInput::onDestroyView).invoke()
         binding = null
     }
 }

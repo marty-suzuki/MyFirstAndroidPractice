@@ -1,14 +1,16 @@
 package com.martysuzuki.viewmodel.search
 
+import com.github.marty_suzuki.unio.UnioFactory
+import com.github.marty_suzuki.unio.UnioViewModel
 import com.martysuzuki.router.search.MovieSearchRouter
-import com.martysuzuki.viewmodel.AnyViewModel
-import com.martysuzuki.uilogicinterface.UiLogicFactory
-import com.martysuzuki.uilogicinterface.search.MovieSearchUiLogic
+import com.martysuzuki.uilogicinterface.search.MovieSearchInput
+import com.martysuzuki.uilogicinterface.search.MovieSearchOutput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import javax.inject.Qualifier
 
 @HiltViewModel
 class MovieSearchViewModel @Inject constructor(
-    uiLogicFactory: UiLogicFactory<MovieSearchUiLogic, Unit>,
-    router: MovieSearchRouter
-) : AnyViewModel<MovieSearchUiLogic, MovieSearchRouter, Unit>(uiLogicFactory, router, Unit)
+    unioFactory: UnioFactory<MovieSearchInput, MovieSearchOutput>,
+    val router: MovieSearchRouter
+) : UnioViewModel<MovieSearchInput, MovieSearchOutput>(unioFactory)

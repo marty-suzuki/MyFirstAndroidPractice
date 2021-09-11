@@ -1,22 +1,15 @@
 package com.martysuzuki.viewmodel.detail
 
-import androidx.lifecycle.SavedStateHandle
-import com.martysuzuki.args.detail.MovieDetailArgs
+import com.github.marty_suzuki.unio.UnioFactory
+import com.github.marty_suzuki.unio.UnioViewModel
 import com.martysuzuki.router.detail.MovieDetailRouter
-import com.martysuzuki.viewmodel.AnyViewModel
-import com.martysuzuki.uilogicinterface.UiLogicFactory
-import com.martysuzuki.uilogicinterface.detail.MovieDetailUiLogic
-import com.martysuzuki.viewmodel.util.getOrThrow
+import com.martysuzuki.uilogicinterface.detail.MovieDetailInput
+import com.martysuzuki.uilogicinterface.detail.MovieDetailOutput
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class MovieDetailViewModel @Inject constructor(
-    uiLogicFactory: UiLogicFactory<MovieDetailUiLogic, Int>,
-    router: MovieDetailRouter,
-    savedStateHandle: SavedStateHandle
-) : AnyViewModel<MovieDetailUiLogic, MovieDetailRouter, Int>(
-    uiLogicFactory = uiLogicFactory,
-    router = router,
-    dependency = savedStateHandle.getOrThrow<MovieDetailArgs>().movieId
-)
+    unioFactory: UnioFactory<MovieDetailInput, MovieDetailOutput>,
+    val router: MovieDetailRouter,
+) : UnioViewModel<MovieDetailInput, MovieDetailOutput>(unioFactory)

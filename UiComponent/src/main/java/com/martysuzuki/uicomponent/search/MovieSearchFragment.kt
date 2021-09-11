@@ -11,10 +11,13 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.github.marty_suzuki.unio.InputProxy
+import com.github.marty_suzuki.unio.OutputProxy
 import com.martysuzuki.args.detail.MovieDetailArgs
 import com.martysuzuki.router.search.MovieSearchRouter
 import com.martysuzuki.uicomponent.databinding.FragmentMovieSearchBinding
-import com.martysuzuki.uilogicinterface.search.MovieSearchUiLogic
+import com.martysuzuki.uilogicinterface.search.MovieSearchInput
+import com.martysuzuki.uilogicinterface.search.MovieSearchOutput
 import com.martysuzuki.viewmodel.search.MovieSearchViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.launchIn
@@ -28,7 +31,8 @@ class MovieSearchFragment : Fragment() {
     private var binding: FragmentMovieSearchBinding? = null
 
     private val viewModel: MovieSearchViewModel by viewModels()
-    private val uiLogic: MovieSearchUiLogic by lazy { viewModel.uiLogic }
+    private val input: InputProxy<MovieSearchInput> by lazy { viewModel.input }
+    private val output: OutputProxy<MovieSearchOutput> by lazy { viewModel.output }
     private val router: MovieSearchRouter by lazy { viewModel.router }
 
     override fun onCreateView(
@@ -46,7 +50,7 @@ class MovieSearchFragment : Fragment() {
             fragmentMovieSearchSearchView.apply {
 
                 isIconifiedByDefault = false
-                uiLogic.query?.also {
+                output.getComputed(MovieSearchOutput::query)?.also {
                     setQuery(it, false)
                 }
 
@@ -54,7 +58,7 @@ class MovieSearchFragment : Fragment() {
                 setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean {
                         if (query != null) {
-                            uiLogic.search(query)
+                            input.getLambda(MovieSearchInput::search).invoke(query)
                             searchView.clearFocus()
                         }
                         return false
@@ -69,18 +73,18 @@ class MovieSearchFragment : Fragment() {
                 val searchItemViewAdapter = MovieSearchItemViewAdapter().apply {
                     setOnItemClickListener(object : MovieSearchItemViewAdapter.OnItemClickListener {
                         override fun onItemClicked(position: Int) {
-                            uiLogic.onItemClicked(position)
+                            input.getLambda(MovieSearchInput::onItemClicked).invoke(position)
                         }
                     })
                 }
 
-                uiLogic.update
+                output.getFlow(MovieSearchOutput::update)
                     .onEach {
                         searchItemViewAdapter.apply(it)
                     }
                     .launchIn(viewLifecycleOwner.lifecycleScope)
 
-                uiLogic.navigateToMovieDetail
+                output.getFlow(MovieSearchOutput::navigateToMovieDetail)
                     .onEach {
                         router.routeMovieDetail(
                             fragment = this@MovieSearchFragment,
@@ -89,7 +93,7 @@ class MovieSearchFragment : Fragment() {
                     }
                     .launchIn(viewLifecycleOwner.lifecycleScope)
 
-                uiLogic.showUnauthorizedDialog
+                output.getFlow(MovieSearchOutput::showUnauthorizedDialog)
                     .onEach {
                         router.routeUnauthorized(this@MovieSearchFragment)
                     }
@@ -138,7 +142,7 @@ class MovieSearchFragment : Fragment() {
                         super.onScrollStateChanged(recyclerView, newState)
 
                         if (!recyclerView.canScrollVertically(1)) {
-                            uiLogic.reachBottom()
+                            input.getLambda(MovieSearchInput::reachBottom).invoke()
                         }
                     }
                 })

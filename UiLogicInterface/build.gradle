@@ -53,4 +53,6 @@ dependencies {
 
     implementation deps.viewmodel
     implementation deps.livedata
+
+    implementation deps.unio
 }
