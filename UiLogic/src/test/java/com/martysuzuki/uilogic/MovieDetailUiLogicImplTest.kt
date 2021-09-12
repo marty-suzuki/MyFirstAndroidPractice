@@ -8,6 +8,8 @@ import com.martysuzuki.uilogic.util.MovieRepositoryMock
 import com.martysuzuki.uilogicinterface.detail.MovieDetailItem
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.TestCoroutineScope
@@ -60,14 +62,14 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job1 = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job1 = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         var actualNavigateToMovieDetail: Int? = null
-        val job2 = launch {
-            dependency.testTarget.navigateToMovieDetail.collect { actualNavigateToMovieDetail = it }
-        }
+        val job2 = dependency.testTarget.navigateToMovieDetail
+            .onEach { actualNavigateToMovieDetail = it }
+            .launchIn(this)
 
         // 1st TEST immediately after when fetch method called
         assertEquals(movieId, dependency.movieRepository.fetchMovieDetailSpy.params)
@@ -141,9 +143,9 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         dependency.movieRepository.fetchMovieDetailSpy.result = MovieDetailResult.Success(movie)
         dependency.movieRepository.fetchMovieDetailSpy.advanceTimeBy(100)
@@ -177,9 +179,9 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         // 1st TEST immediately after when fetch method called
         dependency.movieRepository.fetchMovieDetailSpy.result = MovieDetailResult.Success(movie)
@@ -245,9 +247,9 @@ class MovieDetailUiLogicImplTest {
         )
 
         var actualItems: List<MovieDetailItem>? = null
-        val job = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         // 1st TEST immediately after when fetch method called
         dependency.movieRepository.fetchMovieDetailSpy.result = MovieDetailResult.Success(movie)

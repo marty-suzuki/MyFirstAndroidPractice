@@ -24,7 +24,8 @@ class MovieSearchUiLogicImplTest {
         val testTarget = MovieSearchUiLogicImpl(
             movieRepository,
             coroutineDispatcher,
-            coroutineScope
+            coroutineScope,
+            Unit
         )
     }
 
@@ -39,14 +40,14 @@ class MovieSearchUiLogicImplTest {
         val wrapContentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.WRAP_CONTENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job1 = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job1 = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         var actualNavigateToMovieDetail: Int? = null
-        val job2 = launch {
-            dependency.testTarget.navigateToMovieDetail.collect { actualNavigateToMovieDetail = it }
-        }
+        val job2 = dependency.testTarget.navigateToMovieDetail
+            .onEach { actualNavigateToMovieDetail = it }
+            .launchIn(this)
 
         val clear: () -> Unit = {
             dependency.movieRepository.fetchMoviesSpy.clear()
@@ -98,9 +99,9 @@ class MovieSearchUiLogicImplTest {
         val matchParentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.MATCH_PARENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         // 1st TEST immediately after when search method called
         dependency.testTarget.search(query)
@@ -153,14 +154,14 @@ class MovieSearchUiLogicImplTest {
         val matchParentLoadingItem = MovieSearchItem.Loading(MovieSearchItem.Loading.Style.MATCH_PARENT)
 
         var actualItems: List<MovieSearchItem>? = null
-        val job1 = launch {
-            dependency.testTarget.update.collect { actualItems = it.items }
-        }
+        val job1 = dependency.testTarget.update
+            .onEach { actualItems = it.items }
+            .launchIn(this)
 
         var actualShowUnauthorizedDialog: Unit? = null
-        val job2 = launch {
-            dependency.testTarget.showUnauthorizedDialog.collect { actualShowUnauthorizedDialog = it }
-        }
+        val job2 = dependency.testTarget.showUnauthorizedDialog
+            .onEach { actualShowUnauthorizedDialog = it }
+            .launchIn(this)
 
         dependency.testTarget.search(query)
 
